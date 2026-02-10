@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # https://github.com/marketplace/actions/checkout
+      - uses: actions/checkout@v6
+      # https://github.com/marketplace/actions/astral-sh-setup-uv
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Check syntax
+        run: uv run python -m py_compile main.py
+
+      - name: Verify MCP server imports
+        run: |
+          uv run python -c "from main import mcp; print('Server OK')"
