@@ -5,32 +5,32 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 ## Tools
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    MCP Duck Search Server                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────────┐ │
-│  │ web_search   │  │ search_code  │  │   search_error     │ │
-│  │              │  │              │  │                    │ │
-│  │ Allgemeine   │  │ Code &       │  │ Fehlermeldungen &  │ │
-│  │ Websuche     │  │ Beispiele    │  │ Exceptions         │ │
-│  └──────┬───────┘  └──────┬───────┘  └─────────┬──────────┘ │
-│         │                 │                    │            │
-│  ┌──────┴───────┐  ┌──────┴───────┐            │            │
-│  │ search_docs  │  │ web_search_  │            │            │
-│  │              │  │ news         │            │            │
-│  │ Offizielle   │  │              │            │            │
-│  │ Dokumentation│  │ Nachrichten  │            │            │
-│  └──────┬───────┘  └──────┬───────┘            │            │
-│         │                 │                    │            │
-│         └────────┬────────┴────────────────────┘            │
-│                  ▼                                          │
-│         ┌────────────────┐                                  │
-│         │   DuckDuckGo   │                                  │
-│         │   Search API   │                                  │
-│         └────────────────┘                                  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         MCP Duck Search Server                            │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  │ web_search   │  │ search_code  │  │ search_error │  │ search_spring │  │
+│  │              │  │              │  │              │  │ _boot         │  │
+│  │ Allgemeine   │  │ Code &       │  │ Fehler &     │  │ Spring Boot   │  │
+│  │ Websuche     │  │ Beispiele    │  │ Exceptions   │  │ Ecosystem     │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘  │
+│         │                 │                 │                  │          │
+│         │    ┌────────────┴──┐  ┌───────────┴──┐               │          │
+│         │    │ search_docs   │  │ web_search_  │               │          │
+│         │    │               │  │ news         │               │          │
+│         │    │ Offizielle    │  │              │               │          │
+│         │    │ Dokumentation │  │ Nachrichten  │               │          │
+│         │    └───────┬───────┘  └──────┬───────┘               │          │
+│         │            │                 │                       │          │
+│         └────────────┴────────┬────────┴───────────────────────┘          │
+│                               ▼                                          │
+│                      ┌────────────────┐                                  │
+│                      │   DuckDuckGo   │                                  │
+│                      │   Search API   │                                  │
+│                      └────────────────┘                                  │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Tool | Beschreibung | Site-Filter |
@@ -38,6 +38,7 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 | `web_search` | Allgemeine Websuche | Keine |
 | `search_code` | Code-Beispiele & Programmierlösungen | GitHub, MDN, Dev.to, offizielle Docs |
 | `search_error` | Fehler, Exceptions & Stack Traces | GitHub Issues/Discussions, Reddit, Bugtracker |
+| `search_spring_boot` | Spring Boot Guides, Configs & Best Practices | spring.io, Baeldung, Reflectoring, GitHub Spring Projects |
 | `search_docs` | Offizielle Dokumentation nachschlagen | Keine (findet alle Docs) |
 | `web_search_news` | Aktuelle Nachrichten | Keine |
 
