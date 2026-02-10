@@ -19,6 +19,22 @@ ERROR_SITES = (
     "github.com/discussions",
     "reddit.com",
     "bugs.python.org",
+    "github.com/spring-projects/spring-boot/issues",
+    "github.com/spring-projects/spring-framework/issues",
+    "github.com/spring-cloud",
+)
+
+SPRING_SITES = (
+    "spring.io",
+    "docs.spring.io",
+    "github.com/spring-projects",
+    "github.com/spring-cloud",
+    "spring.io/projects/spring-cloud",
+    "cloud.spring.io",
+    "reflectoring.io",
+    "thorben-janssen.com",
+    "vladmihalcea.com",
+    "piotrminkowski.com",
 )
 
 
@@ -126,6 +142,40 @@ def search_docs(
     query = f"{library} {topic} documentation".strip()
     with DDGS() as ddgs:
         return list(ddgs.text(query, max_results=max_results))
+
+
+@mcp.tool()
+def search_spring_boot(
+    query: str,
+    version: str = "",
+    max_results: int = 5,
+) -> list[dict]:
+    """Search for Spring Boot guides, configurations, and best practices.
+
+    Use this tool for anything related to the Spring ecosystem: Spring Boot,
+    Spring Security, Spring Data, Spring Cloud, etc. Results are scoped to
+    spring.io, Baeldung, and other trusted Spring resources.
+
+    Args:
+        query: The Spring-related search query (e.g. "custom auto-configuration",
+               "JPA repository pagination", "WebClient timeout").
+        version: Optional Spring Boot version to narrow results
+                 (e.g. "3.4", "3.3").
+        max_results: Maximum number of results to return (default 5).
+
+    Returns:
+        A list of search results from Spring-focused sites.
+    """
+    parts = ["spring boot"]
+    if version:
+        parts.append(version)
+    parts.append(query)
+    full_query = " ".join(parts)
+    with DDGS() as ddgs:
+        return list(ddgs.text(
+            _site_query(full_query, SPRING_SITES),
+            max_results=max_results,
+        ))
 
 
 @mcp.tool()
