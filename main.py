@@ -1,5 +1,5 @@
 from fastmcp import FastMCP
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 mcp = FastMCP("duck-search")
 
