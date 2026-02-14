@@ -194,4 +194,4 @@ def web_search_news(query: str, max_results: int = 5) -> list[dict]:
 
 
 if __name__ == "__main__":
-    app.run(transport="http", host="0.0.0.0", port=9900, path="/sse")
+    mcp.run(transport="http", host="0.0.0.0", port=9900, path="/sse")
