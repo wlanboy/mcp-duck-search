@@ -9,7 +9,7 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 │                         MCP Duck Search Server                            │
 ├───────────────────────────────────────────────────────────────────────────┤
 │                                                                           │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
 │  │ web_search   │  │ search_code  │  │ search_error │  │ search_spring │  │
 │  │              │  │              │  │              │  │ _boot         │  │
 │  │ Allgemeine   │  │ Code &       │  │ Fehler &     │  │ Spring Boot   │  │
@@ -24,11 +24,11 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 │         │    └───────┬───────┘  └──────┬───────┘               │          │
 │         │            │                 │                       │          │
 │         └────────────┴────────┬────────┴───────────────────────┘          │
-│                               ▼                                          │
-│                      ┌────────────────┐                                  │
-│                      │   DuckDuckGo   │                                  │
-│                      │   Search API   │                                  │
-│                      └────────────────┘                                  │
+│                               ▼                                           │
+│                      ┌────────────────┐                                   │
+│                      │   DuckDuckGo   │                                   │
+│                      │   Search API   │                                   │
+│                      └────────────────┘                                   │
 │                                                                           │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
