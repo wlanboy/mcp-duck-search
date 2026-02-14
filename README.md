@@ -74,13 +74,7 @@ uv sync
 ### Stdio-Transport (Standard fuer MCP-Clients)
 
 ```bash
-uv run python main.py
-```
-
-### SSE-Transport (HTTP-Server via Uvicorn)
-
-```bash
-uv run uvicorn main:mcp.sse_app --host 0.0.0.0 --port 6000
+uv run main.py
 ```
 
 ## MCP-Client Konfiguration
