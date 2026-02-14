@@ -45,7 +45,7 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 ## Workflow
 
 ```
-┌──────────────┐     MCP (stdio)     ┌──────────────────┐     HTTPS     ┌──────────────┐
+┌──────────────┐     MCP (stdio)      ┌──────────────────┐     HTTPS     ┌──────────────┐
 │              │ ──────────────────▶  │                  │ ────────────▶ │              │
 │  LLM Studio  │     Tool Call        │  MCP Duck Search │    Query      │  DuckDuckGo  │
 │  (Client)    │ ◀──────────────────  │  (Server)        │ ◀──────────── │              │
@@ -80,7 +80,7 @@ uv run python main.py
 ### SSE-Transport (HTTP-Server via Uvicorn)
 
 ```bash
-uv run uvicorn main:mcp.sse_app --host 0.0.0.0 --port 8000
+uv run uvicorn main:mcp.sse_app --host 0.0.0.0 --port 6000
 ```
 
 ## MCP-Client Konfiguration
