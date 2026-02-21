@@ -12,22 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # https://github.com/marketplace/actions/checkout
       - uses: actions/checkout@v6
-      # https://github.com/marketplace/actions/astral-sh-setup-uv
-      - uses: astral-sh/setup-uv@v7
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-
-      - name: Set up Python
-        run: uv python install
+          enable-cache: true # Beschleunigt die CI bei jedem weiteren Run enorm
 
       - name: Install dependencies
-        run: uv sync
+        # --frozen stellt sicher, dass exakt die Lockfile-Versionen genutzt werden
+        run: uv sync --frozen
 
-      - name: Check syntax
-        run: uv run python -m py_compile main.py
+      - name: Lint & Syntax Check
+        # Prüft das gesamte Projekt (inkl. Submodule) in Millisekunden auf Fehler
+        run: uv run ruff check .
+
+      - name: Type Check (Optional aber empfohlen)
+        # Wichtig für MCP, um sicherzustellen, dass Tools die richtigen Schemas liefern
+        run: uv run pyright .
+
+      - name: Run Tests
+        # Führt deine Tests aus (pytest ist meist in pyproject.toml definiert)
+        run: uv run pytest
 
       - name: Verify MCP server imports
+        # Prüft, ob das 'mcp' Objekt korrekt initialisiert werden kann
         run: |
-          uv run python -c "from main import mcp; print('Server OK')"
+          uv run python -c "from main import mcp; print('✅ MCP Server object initialized')"

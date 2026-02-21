@@ -2,12 +2,11 @@ import pytest
 from unittest.mock import patch, MagicMock
 from main import web_search, search_code, search_error, search_docs, search_spring_boot, _site_query
 
-# @mcp.tool() wraps functions into FunctionTool objects; access the original via .fn
-web_search_fn = web_search.fn
-search_code_fn = search_code.fn
-search_error_fn = search_error.fn
-search_docs_fn = search_docs.fn
-search_spring_boot_fn = search_spring_boot.fn
+web_search_fn = web_search
+search_code_fn = search_code
+search_error_fn = search_error
+search_docs_fn = search_docs
+search_spring_boot_fn = search_spring_boot
 
 
 FAKE_RESULTS = [
