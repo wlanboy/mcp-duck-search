@@ -1,7 +1,21 @@
+import re
+from html.parser import HTMLParser
+
+import httpx
 from fastmcp import FastMCP
 from ddgs import DDGS
 
 mcp = FastMCP("duck-search")
+
+DOCS_SITES = (
+    "readthedocs.io",
+    "docs.rs",
+    "developer.mozilla.org",
+    "pkg.go.dev",
+    "docs.python.org",
+    "docs.spring.io",
+    "learn.microsoft.com",
+)
 
 CODE_SITES = (
     "github.com",
@@ -124,24 +138,33 @@ def search_error(
 def search_docs(
     library: str,
     topic: str = "",
+    site: str = "",
     max_results: int = 5,
 ) -> list[dict]:
     """Search for official documentation of a library, framework, or tool.
 
     Use this tool when you need to look up API references, configuration
-    options, or usage guides for a specific technology.
+    options, or usage guides for a specific technology. Results are scoped
+    to common documentation platforms (ReadTheDocs, MDN, pkg.go.dev, etc.).
 
     Args:
         library: The library or framework name (e.g. "fastapi", "react", "spring boot").
         topic: Optional specific topic within the docs (e.g. "routing", "middleware").
+        site: Optional specific documentation site to restrict results to
+              (e.g. "fastapi.tiangolo.com", "docs.djangoproject.com").
+              If omitted, searches across common documentation platforms.
         max_results: Maximum number of results to return (default 5).
 
     Returns:
         A list of documentation search results.
     """
-    query = f"{library} {topic} documentation".strip()
+    query = f"{library} {topic}".strip()
+    sites = (site,) if site else DOCS_SITES
     with DDGS() as ddgs:
-        return list(ddgs.text(query, max_results=max_results))
+        return list(ddgs.text(
+            _site_query(query, sites),
+            max_results=max_results,
+        ))
 
 
 @mcp.tool()
@@ -191,6 +214,61 @@ def web_search_news(query: str, max_results: int = 5) -> list[dict]:
     """
     with DDGS() as ddgs:
         return list(ddgs.news(query, max_results=max_results))
+
+
+class _TextExtractor(HTMLParser):
+    """Strip HTML tags and collect visible text, skipping non-content elements."""
+
+    _SKIP_TAGS = {"script", "style", "head", "nav", "footer", "header", "noscript"}
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._skip_depth = 0
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag: str, _: object) -> None:
+        if tag in self._SKIP_TAGS:
+            self._skip_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._SKIP_TAGS:
+            self._skip_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self._skip_depth:
+            stripped = data.strip()
+            if stripped:
+                self.parts.append(stripped)
+
+
+@mcp.tool()
+def fetch_page(url: str, max_chars: int = 8000) -> str:
+    """Fetch and extract the plain-text content of a web page.
+
+    Use this tool after web_search or search_* to read the full content
+    of a result page for deeper analysis — for example to read an article,
+    inspect a changelog, or study documentation in detail.
+
+    Args:
+        url: The URL of the page to fetch.
+        max_chars: Maximum number of characters to return (default 8000).
+
+    Returns:
+        The extracted plain text of the page, or an error message.
+    """
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; mcp-duck-search/1.0)"}
+    try:
+        with httpx.Client(follow_redirects=True, timeout=15) as client:
+            response = client.get(url, headers=headers)
+            response.raise_for_status()
+    except httpx.HTTPError as exc:
+        return f"Error fetching page: {exc}"
+
+    parser = _TextExtractor()
+    parser.feed(response.text)
+    text = "\n".join(parser.parts)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text[:max_chars]
 
 
 if __name__ == "__main__":
