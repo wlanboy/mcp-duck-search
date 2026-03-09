@@ -1,6 +1,18 @@
 import pytest
-from unittest.mock import patch, MagicMock
-from main import web_search, search_code, search_error, search_docs, search_spring_boot, _site_query
+from unittest.mock import MagicMock, patch
+
+import httpx
+
+from main import (
+    _site_query,
+    fetch_page,
+    search_code,
+    search_docs,
+    search_error,
+    search_spring_boot,
+    web_search,
+    web_search_news,
+)
 
 web_search_fn = web_search
 search_code_fn = search_code
@@ -77,8 +89,61 @@ def test_search_docs(mock_ddgs):
 
     results = search_docs_fn("fastapi", topic="routing")
 
-    mock_ddgs.text.assert_called_once_with("fastapi routing documentation", max_results=5)
+    call_args = mock_ddgs.text.call_args
+    assert "fastapi routing" in call_args[0][0]
     assert results == FAKE_RESULTS
+
+
+@patch("main.DDGS")
+def test_web_search_news(mock_ddgs):
+    fake_news = [{"title": "News", "url": "https://example.com", "body": "...", "date": "2024-01-01", "source": "Example"}]
+    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
+    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
+    mock_ddgs.news.return_value = fake_news
+
+    results = web_search_news("python release")
+
+    mock_ddgs.news.assert_called_once_with("python release", max_results=5)
+    assert results == fake_news
+
+
+@patch("main.httpx.Client")
+def test_fetch_page_html(mock_client_cls):
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "text/html; charset=utf-8"}
+    mock_response.text = "<html><body><p>Hello world</p></body></html>"
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.return_value = mock_response
+
+    result = fetch_page("https://example.com")
+
+    assert "Hello world" in result
+
+
+@patch("main.httpx.Client")
+def test_fetch_page_unsupported_content_type(mock_client_cls):
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "application/pdf"}
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.return_value = mock_response
+
+    result = fetch_page("https://example.com/file.pdf")
+
+    assert "Unsupported content type" in result
+    assert "application/pdf" in result
+
+
+@patch("main.httpx.Client")
+def test_fetch_page_http_error(mock_client_cls):
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.side_effect = httpx.HTTPError("connection failed")
+
+    result = fetch_page("https://example.com")
+
+    assert "Error fetching page" in result
 
 
 @pytest.mark.integration

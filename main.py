@@ -43,8 +43,6 @@ SPRING_SITES = (
     "docs.spring.io",
     "github.com/spring-projects",
     "github.com/spring-cloud",
-    "spring.io/projects/spring-cloud",
-    "cloud.spring.io",
     "reflectoring.io",
     "thorben-janssen.com",
     "vladmihalcea.com",
@@ -230,9 +228,12 @@ class _TextExtractor(HTMLParser):
         if tag in self._SKIP_TAGS:
             self._skip_depth += 1
 
+    def handle_startendtag(self, *_: object) -> None:
+        pass  # self-closing tags have no content; do not touch _skip_depth
+
     def handle_endtag(self, tag: str) -> None:
         if tag in self._SKIP_TAGS:
-            self._skip_depth -= 1
+            self._skip_depth = max(0, self._skip_depth - 1)
 
     def handle_data(self, data: str) -> None:
         if not self._skip_depth:
@@ -263,6 +264,10 @@ def fetch_page(url: str, max_chars: int = 8000) -> str:
             response.raise_for_status()
     except httpx.HTTPError as exc:
         return f"Error fetching page: {exc}"
+
+    content_type = response.headers.get("content-type", "")
+    if content_type and not any(t in content_type for t in ("text/html", "text/plain")):
+        return f"Unsupported content type: {content_type}"
 
     parser = _TextExtractor()
     parser.feed(response.text)
