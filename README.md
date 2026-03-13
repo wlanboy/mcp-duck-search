@@ -4,7 +4,7 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 
 ## Tools
 
-```
+```txt
 ┌───────────────────────────────────────────────────────────────────────────┐
 │                         MCP Duck Search Server                            │
 ├───────────────────────────────────────────────────────────────────────────┤
@@ -44,7 +44,7 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 
 ## Workflow
 
-```
+```txt
 ┌──────────────┐     MCP (stdio)      ┌──────────────────┐     HTTPS     ┌──────────────┐
 │              │ ──────────────────▶  │                  │ ────────────▶ │              │
 │  LLM Studio  │     Tool Call        │  MCP Duck Search │    Query      │  DuckDuckGo  │
@@ -66,7 +66,13 @@ Ein MCP-Server (Model Context Protocol) auf Basis von [FastMCP](https://gofastmc
 ## Installation
 
 ```bash
+uv lock --upgrade
 uv sync
+uv run pytest
+uv run pyright
+uv run ruff check
+
+uv pip compile pyproject.toml -o requirements.txt
 ```
 
 ## Server starten
@@ -98,8 +104,18 @@ uv run main.py
 {
   "mcpServers": {
     "duck-search": {
-      "url": "http://localhost:8000/sse"
+      "url": "http://localhost:9900/sse"
     }
   }
 }
+```
+
+## Docker
+
+```bash
+# Build
+docker build -t mcp-duck-search .
+
+# Run
+docker run --rm --name mcp-duck -p 9900:9900 mcp-duck-search
 ```
