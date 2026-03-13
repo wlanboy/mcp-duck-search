@@ -31,6 +31,8 @@ RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
 
 # Copy application files
 COPY --chown=appuser:appuser main.py /app/
+COPY --chown=appuser:appuser config.py /app/
+COPY --chown=appuser:appuser search.py /app/
 
 # Use non-root user
 USER appuser
