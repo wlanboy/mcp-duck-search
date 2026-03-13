@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 
-from main import (
+from search import (
     _site_query,
     fetch_page,
     search_code,
@@ -31,7 +31,7 @@ def test_site_query():
     assert result == "python async (site:github.com OR site:dev.to)"
 
 
-@patch("main.DDGS")
+@patch("search.DDGS")
 def test_web_search(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
@@ -43,7 +43,7 @@ def test_web_search(mock_ddgs):
     assert results == FAKE_RESULTS
 
 
-@patch("main.DDGS")
+@patch("search.DDGS")
 def test_web_search_custom_max(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
@@ -55,7 +55,7 @@ def test_web_search_custom_max(mock_ddgs):
     assert results == FAKE_RESULTS
 
 
-@patch("main.DDGS")
+@patch("search.DDGS")
 def test_search_code(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
@@ -68,7 +68,7 @@ def test_search_code(mock_ddgs):
     assert results == FAKE_RESULTS
 
 
-@patch("main.DDGS")
+@patch("search.DDGS")
 def test_search_error(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
@@ -77,11 +77,13 @@ def test_search_error(mock_ddgs):
     results = search_error_fn("ModuleNotFoundError", language="python")
 
     call_args = mock_ddgs.text.call_args
-    assert "python ModuleNotFoundError" in call_args[0][0]
+    query = call_args[0][0]
+    assert 'python' in query
+    assert '"ModuleNotFoundError"' in query
     assert results == FAKE_RESULTS
 
 
-@patch("main.DDGS")
+@patch("search.DDGS")
 def test_search_docs(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
@@ -94,7 +96,7 @@ def test_search_docs(mock_ddgs):
     assert results == FAKE_RESULTS
 
 
-@patch("main.DDGS")
+@patch("search.DDGS")
 def test_web_search_news(mock_ddgs):
     fake_news = [{"title": "News", "url": "https://example.com", "body": "...", "date": "2024-01-01", "source": "Example"}]
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
@@ -107,7 +109,7 @@ def test_web_search_news(mock_ddgs):
     assert results == fake_news
 
 
-@patch("main.httpx.Client")
+@patch("search.httpx.Client")
 def test_fetch_page_html(mock_client_cls):
     mock_response = MagicMock()
     mock_response.headers = {"content-type": "text/html; charset=utf-8"}
@@ -121,7 +123,7 @@ def test_fetch_page_html(mock_client_cls):
     assert "Hello world" in result
 
 
-@patch("main.httpx.Client")
+@patch("search.httpx.Client")
 def test_fetch_page_unsupported_content_type(mock_client_cls):
     mock_response = MagicMock()
     mock_response.headers = {"content-type": "application/pdf"}
@@ -135,7 +137,7 @@ def test_fetch_page_unsupported_content_type(mock_client_cls):
     assert "application/pdf" in result
 
 
-@patch("main.httpx.Client")
+@patch("search.httpx.Client")
 def test_fetch_page_http_error(mock_client_cls):
     mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
     mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
@@ -144,6 +146,22 @@ def test_fetch_page_http_error(mock_client_cls):
     result = fetch_page("https://example.com")
 
     assert "Error fetching page" in result
+
+
+@patch("search.DDGS")
+def test_search_spring_boot(mock_ddgs):
+    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
+    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
+    mock_ddgs.text.return_value = FAKE_RESULTS
+
+    results = search_spring_boot_fn("JPA repository pagination", version="3.4")
+
+    call_args = mock_ddgs.text.call_args
+    query = call_args[0][0]
+    assert "spring boot" in query
+    assert "3.4" in query
+    assert "JPA repository pagination" in query
+    assert results == FAKE_RESULTS
 
 
 @pytest.mark.integration
