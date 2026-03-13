@@ -224,11 +224,11 @@ class _TextExtractor(HTMLParser):
         self._skip_depth = 0
         self.parts: list[str] = []
 
-    def handle_starttag(self, tag: str, _: object) -> None:
+    def handle_starttag(self, tag: str, attrs: object) -> None:
         if tag in self._SKIP_TAGS:
             self._skip_depth += 1
 
-    def handle_startendtag(self, *_: object) -> None:
+    def handle_startendtag(self, tag: str, attrs: object) -> None:
         pass  # self-closing tags have no content; do not touch _skip_depth
 
     def handle_endtag(self, tag: str) -> None:
