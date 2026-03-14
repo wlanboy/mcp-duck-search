@@ -3,7 +3,10 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 
+import search
 from search import (
+    _search,
+    _search_news,
     _site_query,
     fetch_page,
     search_code,
@@ -162,6 +165,63 @@ def test_search_spring_boot(mock_ddgs):
     assert "3.4" in query
     assert "JPA repository pagination" in query
     assert results == FAKE_RESULTS
+
+
+FAKE_SEARXNG_RESPONSE = {
+    "results": [
+        {"title": "Example", "url": "https://example.com", "content": "A test result."},
+    ]
+}
+
+
+@patch("search.httpx.Client")
+def test_search_uses_searxng_when_url_set(mock_client_cls):
+    mock_response = MagicMock()
+    mock_response.json.return_value = FAKE_SEARXNG_RESPONSE
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.return_value = mock_response
+
+    with patch.object(search, "_SEARXNG_URL", "http://searxng:8080"):
+        results = _search("python async", max_results=5)
+
+    mock_client_cls.get.assert_called_once()
+    call_kwargs = mock_client_cls.get.call_args
+    assert "http://searxng:8080/search" in call_kwargs[0][0]
+    assert results == [{"title": "Example", "href": "https://example.com", "body": "A test result."}]
+
+
+@patch("search.DDGS")
+@patch("search.httpx.Client")
+def test_search_falls_back_to_ddgs_on_searxng_error(mock_client_cls, mock_ddgs):
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.side_effect = httpx.HTTPError("connection refused")
+
+    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
+    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
+    mock_ddgs.text.return_value = FAKE_RESULTS
+
+    with patch.object(search, "_SEARXNG_URL", "http://searxng:8080"):
+        results = _search("python async", max_results=5)
+
+    mock_ddgs.text.assert_called_once()
+    assert results == FAKE_RESULTS
+
+
+@patch("search.httpx.Client")
+def test_search_news_uses_searxng_news_category(mock_client_cls):
+    mock_response = MagicMock()
+    mock_response.json.return_value = FAKE_SEARXNG_RESPONSE
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.return_value = mock_response
+
+    with patch.object(search, "_SEARXNG_URL", "http://searxng:8080"):
+        _search_news("python release", max_results=5)
+
+    call_kwargs = mock_client_cls.get.call_args
+    assert call_kwargs[1]["params"]["categories"] == "news"
 
 
 @pytest.mark.integration

@@ -22,15 +22,18 @@ def _site_query(query: str, sites: tuple[str, ...]) -> str:
 def _search(query: str, max_results: int, categories: str = "general") -> list[dict]:
     """Route a search to SearXNG or DuckDuckGo depending on SEARXNG_URL."""
     if _SEARXNG_URL:
-        params = {"q": query, "format": "json", "categories": categories}
-        with httpx.Client(follow_redirects=True, timeout=15) as client:
-            response = client.get(f"{_SEARXNG_URL}/search", params=params)
-            response.raise_for_status()
-        results = response.json().get("results", [])[:max_results]
-        return [
-            {"title": r.get("title", ""), "href": r.get("url", ""), "body": r.get("content", "")}
-            for r in results
-        ]
+        try:
+            params = {"q": query, "format": "json", "categories": categories}
+            with httpx.Client(follow_redirects=True, timeout=15) as client:
+                response = client.get(f"{_SEARXNG_URL}/search", params=params)
+                response.raise_for_status()
+            results = response.json().get("results", [])[:max_results]
+            return [
+                {"title": r.get("title", ""), "href": r.get("url", ""), "body": r.get("content", "")}
+                for r in results
+            ]
+        except Exception:
+            pass  # SearXNG nicht erreichbar → Fallback auf DuckDuckGo
     with DDGS() as ddgs:
         return list(ddgs.text(query, max_results=max_results))
 
