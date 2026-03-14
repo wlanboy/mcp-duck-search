@@ -1,0 +1,125 @@
+search:
+  formats:
+    - html
+    - json
+  # Anzahl der Ergebnisse pro Seite
+  default_lang: de
+  safe_search: 0
+  # Timeout pro Engine in Sekunden
+  timeout_limit: 6.0
+
+server:
+  secret_key: "change-me-in-production"
+  limiter: false        # Rate-Limiter deaktivieren (kein Redis nötig)
+  image_proxy: false
+
+# Such-Engines — nur relevante aktiviert, Rest deaktiviert
+engines:
+  # --- Allgemeine Websuche ---
+  - name: google
+    engine: google
+    shortcut: g
+    disabled: false
+
+  - name: bing
+    engine: bing
+    shortcut: bi
+    disabled: true
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    disabled: false
+
+  - name: brave
+    engine: brave
+    shortcut: br
+    disabled: false
+
+  # --- News ---
+  - name: google news
+    engine: google_news
+    shortcut: gn
+    categories: news
+    disabled: false
+
+  - name: bing news
+    engine: bing_news
+    shortcut: bin
+    categories: news
+    disabled: true
+
+  # --- Entwickler / Code ---
+  - name: github
+    engine: github
+    shortcut: gh
+    categories: it
+    disabled: false
+
+  - name: stackoverflow
+    engine: stackoverflow
+    shortcut: so
+    categories: it
+    disabled: true
+
+  - name: pypi
+    engine: pypi
+    shortcut: pypi
+    categories: it
+    disabled: true
+
+  - name: npm
+    engine: npm
+    shortcut: npm
+    categories: it
+    disabled: true
+
+  - name: maven repository
+    engine: maven
+    shortcut: mvn
+    categories: it
+    disabled: false
+
+  # --- Dokumentation ---
+  - name: mdn
+    engine: mdn
+    shortcut: mdn
+    categories: it
+    disabled: false
+
+  - name: devdocs
+    engine: xpath
+    shortcut: dd
+    url: https://devdocs.io/search?q={query}
+    url_xpath: //a[@class="link"]/@href
+    title_xpath: //a[@class="link"]/text()
+    content_xpath: //p[@class="excerpt"]/text()
+    categories: it
+    disabled: true        # optional, bei Bedarf aktivieren
+
+  # --- Wissensdatenbanken ---
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+    disabled: false
+
+  - name: wolframalpha
+    engine: wolframalpha_api
+    shortcut: wa
+    disabled: true        # API-Key erforderlich
+
+  # --- Nicht benötigt (Beispiele zum Deaktivieren) ---
+  - name: google images
+    engine: google_images
+    shortcut: goi
+    disabled: true
+
+  - name: bing images
+    engine: bing_images
+    shortcut: bii
+    disabled: true
+
+  - name: google videos
+    engine: google_videos
+    shortcut: gov
+    disabled: true
