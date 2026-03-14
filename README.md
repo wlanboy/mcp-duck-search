@@ -82,7 +82,7 @@ search:
 ```
 
 ```bash
-docker run -d --name searxng \
+docker run --rm --name searxng \
   -p 8880:8080 \
   -v ./searxng:/etc/searxng \
   searxng/searxng
