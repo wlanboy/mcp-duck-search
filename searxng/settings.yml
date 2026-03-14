@@ -1,63 +1,11 @@
 search:
+  safe_search: 0
+  default_lang: "de"
   formats:
     - html
     - json
-  default_lang: de
-  safe_search: 0
-  timeout_limit: 6.0
 
 server:
   secret_key: "change-me-in-production"
   limiter: false
   image_proxy: false
-
-engines:
-  - name: google
-    engine: google
-    shortcut: g
-    disabled: false
-
-  - name: duckduckgo
-    engine: duckduckgo
-    shortcut: ddg
-    disabled: false
-
-  - name: brave
-    engine: brave
-    shortcut: br
-    disabled: false
-
-  - name: google news
-    engine: google_news
-    shortcut: gn
-    categories: news
-    disabled: false
-
-  - name: github
-    engine: github
-    shortcut: gh
-    categories: it
-    disabled: false
-
-  - name: stackoverflow
-    engine: stackoverflow
-    shortcut: so
-    categories: it
-    disabled: false
-
-  - name: pypi
-    engine: pypi
-    shortcut: pypi
-    categories: it
-    disabled: false
-
-  - name: npm
-    engine: npm
-    shortcut: npm
-    categories: it
-    disabled: false
-
-  - name: wikipedia
-    engine: wikipedia
-    shortcut: wp
-    disabled: false
