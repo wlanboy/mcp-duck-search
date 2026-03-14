@@ -19,7 +19,8 @@ FROM python:3.12-slim
 # Umgebungsvariablen übernehmen
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/opt/venv/bin:$PATH"
+    PATH="/opt/venv/bin:$PATH" \
+    SEARXNG_URL=""
 
 WORKDIR /app
 
