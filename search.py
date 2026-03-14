@@ -1,3 +1,4 @@
+import os
 import re
 from html.parser import HTMLParser
 
@@ -7,13 +8,39 @@ from ddgs import DDGS
 
 from config import CODE_SITES, DOCS_SITES, ERROR_SITES, SPRING_SITES
 
+_SEARXNG_URL = os.environ.get("SEARXNG_URL", "").rstrip("/")
+
 mcp = FastMCP("duck-search")
 
 
 def _site_query(query: str, sites: tuple[str, ...]) -> str:
-    """Build a DuckDuckGo query scoped to specific sites."""
+    """Build a search query scoped to specific sites."""
     site_filter = " OR ".join(f"site:{s}" for s in sites)
     return f"{query} ({site_filter})"
+
+
+def _search(query: str, max_results: int, categories: str = "general") -> list[dict]:
+    """Route a search to SearXNG or DuckDuckGo depending on SEARXNG_URL."""
+    if _SEARXNG_URL:
+        params = {"q": query, "format": "json", "categories": categories}
+        with httpx.Client(follow_redirects=True, timeout=15) as client:
+            response = client.get(f"{_SEARXNG_URL}/search", params=params)
+            response.raise_for_status()
+        results = response.json().get("results", [])[:max_results]
+        return [
+            {"title": r.get("title", ""), "href": r.get("url", ""), "body": r.get("content", "")}
+            for r in results
+        ]
+    with DDGS() as ddgs:
+        return list(ddgs.text(query, max_results=max_results))
+
+
+def _search_news(query: str, max_results: int) -> list[dict]:
+    """Route a news search to SearXNG or DuckDuckGo depending on SEARXNG_URL."""
+    if _SEARXNG_URL:
+        return _search(query, max_results, categories="news")
+    with DDGS() as ddgs:
+        return list(ddgs.news(query, max_results=max_results))
 
 
 @mcp.tool()
@@ -32,8 +59,7 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
     Returns:
         A list of search results with title, href, and body.
     """
-    with DDGS() as ddgs:
-        return list(ddgs.text(query, max_results=max_results))
+    return _search(query, max_results)
 
 
 @mcp.tool()
@@ -59,11 +85,7 @@ def search_code(
         A list of search results from developer-focused sites.
     """
     full_query = f"{language} {query}".strip() if language else query
-    with DDGS() as ddgs:
-        return list(ddgs.text(
-            _site_query(full_query, CODE_SITES),
-            max_results=max_results,
-        ))
+    return _search(_site_query(full_query, CODE_SITES), max_results)
 
 
 @mcp.tool()
@@ -91,11 +113,7 @@ def search_error(
     """
     quoted_error = f'"{error_message}"'
     full_query = f"{language} {quoted_error}".strip() if language else quoted_error
-    with DDGS() as ddgs:
-        return list(ddgs.text(
-            _site_query(full_query, ERROR_SITES),
-            max_results=max_results,
-        ))
+    return _search(_site_query(full_query, ERROR_SITES), max_results)
 
 
 @mcp.tool()
@@ -124,11 +142,7 @@ def search_docs(
     """
     query = f"{library} {topic}".strip()
     sites = (site,) if site else DOCS_SITES
-    with DDGS() as ddgs:
-        return list(ddgs.text(
-            _site_query(query, sites),
-            max_results=max_results,
-        ))
+    return _search(_site_query(query, sites), max_results)
 
 
 @mcp.tool()
@@ -158,11 +172,7 @@ def search_spring_boot(
         parts.append(version)
     parts.append(query)
     full_query = " ".join(parts)
-    with DDGS() as ddgs:
-        return list(ddgs.text(
-            _site_query(full_query, SPRING_SITES),
-            max_results=max_results,
-        ))
+    return _search(_site_query(full_query, SPRING_SITES), max_results)
 
 
 @mcp.tool()
@@ -181,8 +191,7 @@ def web_search_news(query: str, max_results: int = 5) -> list[dict]:
     Returns:
         A list of news results with title, url, body, date, and source.
     """
-    with DDGS() as ddgs:
-        return list(ddgs.news(query, max_results=max_results))
+    return _search_news(query, max_results)
 
 
 class _TextExtractor(HTMLParser):
