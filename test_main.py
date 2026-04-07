@@ -129,6 +129,22 @@ def test_fetch_page_html(mock_client_cls):
 
 
 @patch("search.httpx.Client")
+def test_fetch_page_json(mock_client_cls):
+    mock_response = MagicMock()
+    mock_response.headers = {"content-type": "application/json; charset=utf-8"}
+    mock_response.json.return_value = {"version": "1.0", "items": ["a", "b"]}
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.return_value = mock_response
+
+    result = fetch_page("https://api.example.com/data.json")
+
+    assert '"version"' in result
+    assert '"1.0"' in result
+    assert "Unsupported content type" not in result
+
+
+@patch("search.httpx.Client")
 def test_fetch_page_unsupported_content_type(mock_client_cls):
     mock_response = MagicMock()
     mock_response.headers = {"content-type": "application/pdf"}
