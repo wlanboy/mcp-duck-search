@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from html.parser import HTMLParser
@@ -6,7 +7,9 @@ import httpx
 from fastmcp import FastMCP
 from ddgs import DDGS
 
-from config import CODE_SITES, DOCS_SITES, ERROR_SITES, SPRING_SITES
+from config import CODE_SITES, DOCS_SITES, ERROR_SITES, MAVEN_SITES, SPRING_SITES
+
+logger = logging.getLogger(__name__)
 
 _SEARXNG_URL = os.environ.get("SEARXNG_URL", "").rstrip("/")
 
@@ -32,8 +35,8 @@ def _search(query: str, max_results: int, categories: str = "general") -> list[d
                 {"title": r.get("title", ""), "href": r.get("url", ""), "body": r.get("content", "")}
                 for r in results
             ]
-        except Exception:
-            pass  # SearXNG nicht erreichbar → Fallback auf DuckDuckGo
+        except Exception as exc:
+            logger.warning("SearXNG nicht erreichbar (%s: %s) → Fallback auf DuckDuckGo", type(exc).__name__, exc)
     with DDGS() as ddgs:
         return list(ddgs.text(query, max_results=max_results))
 
@@ -176,6 +179,34 @@ def search_spring_boot(
     parts.append(query)
     full_query = " ".join(parts)
     return _search(_site_query(full_query, SPRING_SITES), max_results)
+
+
+@mcp.tool()
+def search_maven(
+    artifact: str,
+    group_id: str = "",
+    max_results: int = 5,
+) -> list[dict]:
+    """Search for Maven / Gradle dependencies on Maven Central and MVN Repository.
+
+    Use this tool when you need to find a Java or Kotlin library, check the
+    latest version of an artifact, or look up Gradle plugin coordinates.
+
+    Args:
+        artifact: The artifact name or search term
+                  (e.g. "spring-boot-starter-web", "jackson-databind").
+        group_id: Optional Maven group ID to narrow results
+                  (e.g. "org.springframework.boot", "com.fasterxml.jackson.core").
+        max_results: Maximum number of results to return (default 5).
+
+    Returns:
+        A list of search results from Maven Central and related sites.
+    """
+    parts = []
+    if group_id:
+        parts.append(group_id)
+    parts.append(artifact)
+    return _search(_site_query(" ".join(parts), MAVEN_SITES), max_results)
 
 
 @mcp.tool()

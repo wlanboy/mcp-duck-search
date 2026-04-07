@@ -12,6 +12,7 @@ from search import (
     search_code,
     search_docs,
     search_error,
+    search_maven,
     search_spring_boot,
     web_search,
     web_search_news,
@@ -21,6 +22,7 @@ web_search_fn = web_search
 search_code_fn = search_code
 search_error_fn = search_error
 search_docs_fn = search_docs
+search_maven_fn = search_maven
 search_spring_boot_fn = search_spring_boot
 
 
@@ -209,6 +211,26 @@ def test_search_falls_back_to_ddgs_on_searxng_error(mock_client_cls, mock_ddgs):
     assert results == FAKE_RESULTS
 
 
+@patch("search.DDGS")
+@patch("search.httpx.Client")
+def test_search_falls_back_to_ddgs_and_logs_warning(mock_client_cls, mock_ddgs, caplog):
+    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
+    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.get.side_effect = httpx.HTTPError("connection refused")
+
+    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
+    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
+    mock_ddgs.text.return_value = FAKE_RESULTS
+
+    with patch.object(search, "_SEARXNG_URL", "http://searxng:8080"):
+        import logging
+        with caplog.at_level(logging.WARNING, logger="search"):
+            results = _search("python async", max_results=5)
+
+    assert any("SearXNG" in r.message for r in caplog.records)
+    assert results == FAKE_RESULTS
+
+
 @patch("search.httpx.Client")
 def test_search_news_uses_searxng_news_category(mock_client_cls):
     mock_response = MagicMock()
@@ -222,6 +244,36 @@ def test_search_news_uses_searxng_news_category(mock_client_cls):
 
     call_kwargs = mock_client_cls.get.call_args
     assert call_kwargs[1]["params"]["categories"] == "news"
+
+
+@patch("search.DDGS")
+def test_search_maven(mock_ddgs):
+    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
+    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
+    mock_ddgs.text.return_value = FAKE_RESULTS
+
+    results = search_maven_fn("jackson-databind", group_id="com.fasterxml.jackson.core")
+
+    call_args = mock_ddgs.text.call_args
+    query = call_args[0][0]
+    assert "com.fasterxml.jackson.core" in query
+    assert "jackson-databind" in query
+    assert "mvnrepository.com" in query or "central.sonatype.com" in query
+    assert results == FAKE_RESULTS
+
+
+@patch("search.DDGS")
+def test_search_maven_without_group_id(mock_ddgs):
+    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
+    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
+    mock_ddgs.text.return_value = FAKE_RESULTS
+
+    results = search_maven_fn("spring-boot-starter-web")
+
+    call_args = mock_ddgs.text.call_args
+    query = call_args[0][0]
+    assert "spring-boot-starter-web" in query
+    assert results == FAKE_RESULTS
 
 
 @pytest.mark.integration
