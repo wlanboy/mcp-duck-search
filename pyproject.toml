@@ -1,7 +1,7 @@
 [project]
 name = "mcp-duck-search"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP server providing web search tools via DuckDuckGo and SearXNG"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
