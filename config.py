@@ -27,6 +27,13 @@ ERROR_SITES = tuple(dict.fromkeys(CODE_SITES + (
     "bugs.python.org",
 )))
 
+MAVEN_SITES = (
+    "central.sonatype.com",
+    "mvnrepository.com",
+    "search.maven.org",
+    "plugins.gradle.org",
+)
+
 SPRING_SITES = (
     "spring.io",
     "docs.spring.io",
