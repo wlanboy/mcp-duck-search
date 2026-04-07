@@ -6,6 +6,9 @@ DOCS_SITES = (
     "docs.python.org",
     "docs.spring.io",
     "learn.microsoft.com",
+    "docs.github.com",
+    "kubernetes.io/docs",
+    "hub.docker.com",
 )
 
 CODE_SITES = (
