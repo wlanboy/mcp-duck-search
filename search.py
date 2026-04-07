@@ -173,7 +173,8 @@ def search_spring_boot(
     Returns:
         A list of search results from Spring-focused sites.
     """
-    parts = ["spring boot"]
+    query_lower = query.lower()
+    parts = [] if "spring boot" in query_lower else ["spring boot"]
     if version:
         parts.append(version)
     parts.append(query)
@@ -280,6 +281,12 @@ def fetch_page(url: str, max_chars: int = 8000) -> str:
         return f"Error fetching page: {exc}"
 
     content_type = response.headers.get("content-type", "")
+    if "application/json" in content_type:
+        import json as _json
+        try:
+            return _json.dumps(response.json(), indent=2, ensure_ascii=False)[:max_chars]
+        except Exception:
+            return response.text[:max_chars]
     if content_type and not any(t in content_type for t in ("text/html", "text/plain")):
         return f"Unsupported content type: {content_type}"
 
