@@ -187,16 +187,12 @@ starlette==0.52.1
     #   sse-starlette
 typing-extensions==4.15.0
     # via
-    #   anyio
-    #   exceptiongroup
     #   fastmcp-slim
     #   mcp
     #   opentelemetry-api
     #   py-key-value-aio
     #   pydantic
     #   pydantic-core
-    #   referencing
-    #   starlette
     #   typing-inspection
 typing-inspection==0.4.2
     # via
