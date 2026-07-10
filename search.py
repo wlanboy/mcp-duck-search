@@ -7,7 +7,7 @@ import httpx
 from fastmcp import FastMCP
 from ddgs import DDGS
 
-from config import CODE_SITES, DOCS_SITES, ERROR_SITES, MAVEN_SITES, SPRING_SITES
+from config import CODE_SITES
 
 logger = logging.getLogger(__name__)
 
@@ -41,29 +41,16 @@ def _search(query: str, max_results: int, categories: str = "general") -> list[d
         return list(ddgs.text(query, max_results=max_results))
 
 
-def _search_news(query: str, max_results: int) -> list[dict]:
-    """Route a news search to SearXNG or DuckDuckGo depending on SEARXNG_URL."""
-    if _SEARXNG_URL:
-        return _search(query, max_results, categories="news")
-    with DDGS() as ddgs:
-        return list(ddgs.news(query, max_results=max_results))
-
-
 @mcp.tool()
 def web_search(query: str, max_results: int = 5) -> list[dict]:
-    """Search the internet using DuckDuckGo. Use this tool for general-purpose
-    queries that do not fit a more specific tool: current events, comparisons,
-    product information, or anything that is not a code example, error message,
-    official docs lookup, or Spring Boot question. Prefer the specialised
-    search_* tools whenever the topic matches their scope, because they return
-    higher-quality results by restricting to trusted sites.
+    """Search the web for anything that is not a programming question
+    (use search_code for those). Returns short snippets only — you MUST
+    call fetch_page on the best result's href before answering; never
+    answer from the snippet body alone.
 
     Args:
         query: The search query string.
         max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of search results with title, href, and body.
     """
     return _search(query, max_results)
 
@@ -74,159 +61,19 @@ def search_code(
     language: str = "",
     max_results: int = 5,
 ) -> list[dict]:
-    """Search for code examples, solutions, and programming documentation.
-
-    Use this tool when you need to find code snippets, API usage examples,
-    or programming how-tos. Results are scoped to developer sites like
-    GitHub, MDN, and official docs.
+    """Search for anything programming-related: code, errors, docs, dependencies.
+    Use this instead of web_search for programming questions. Returns short
+    snippets only — you MUST call fetch_page on the best result's href
+    before answering; never answer from the snippet body alone.
 
     Args:
-        query: The code-related search query (e.g. "python read csv file",
-               "react useEffect cleanup").
-        language: Optional programming language to prepend to the query
-                  (e.g. "python", "javascript", "rust").
+        query: The programming-related query, e.g. "python read csv file" or
+               "ModuleNotFoundError: No module named 'foo'".
+        language: Optional language/framework to prepend, e.g. "python".
         max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of search results from developer-focused sites.
     """
     full_query = f"{language} {query}".strip() if language else query
     return _search(_site_query(full_query, CODE_SITES), max_results)
-
-
-@mcp.tool()
-def search_error(
-    error_message: str,
-    language: str = "",
-    max_results: int = 5,
-) -> list[dict]:
-    """Search for solutions to error messages, exceptions, and stack traces.
-
-    Use this tool when encountering an error message or exception.
-    Pass the core error message (without file paths or line numbers).
-    Results are scoped to sites where developers discuss and resolve errors.
-
-    Args:
-        error_message: The error message or exception text
-                       (e.g. "TypeError: Cannot read properties of undefined",
-                        "ModuleNotFoundError: No module named 'foo'").
-        language: Optional programming language or framework context
-                  (e.g. "python", "spring boot", "react").
-        max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of search results with potential fixes and explanations.
-    """
-    quoted_error = f'"{error_message}"'
-    full_query = f"{language} {quoted_error}".strip() if language else quoted_error
-    return _search(_site_query(full_query, ERROR_SITES), max_results)
-
-
-@mcp.tool()
-def search_docs(
-    library: str,
-    topic: str = "",
-    site: str = "",
-    max_results: int = 5,
-) -> list[dict]:
-    """Search for official documentation of a library, framework, or tool.
-
-    Use this tool when you need to look up API references, configuration
-    options, or usage guides for a specific technology. Results are scoped
-    to common documentation platforms (ReadTheDocs, MDN, pkg.go.dev, etc.).
-
-    Args:
-        library: The library or framework name (e.g. "fastapi", "react", "spring boot").
-        topic: Optional specific topic within the docs (e.g. "routing", "middleware").
-        site: Optional specific documentation site to restrict results to
-              (e.g. "fastapi.tiangolo.com", "docs.djangoproject.com").
-              If omitted, searches across common documentation platforms.
-        max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of documentation search results.
-    """
-    query = f"{library} {topic}".strip()
-    sites = (site,) if site else DOCS_SITES
-    return _search(_site_query(query, sites), max_results)
-
-
-@mcp.tool()
-def search_spring_boot(
-    query: str,
-    version: str = "",
-    max_results: int = 5,
-) -> list[dict]:
-    """Search for Spring Boot guides, configurations, and best practices.
-
-    Use this tool for anything related to the Spring ecosystem: Spring Boot,
-    Spring Security, Spring Data, Spring Cloud, etc. Results are scoped to
-    spring.io, Baeldung, and other trusted Spring resources.
-
-    Args:
-        query: The Spring-related search query (e.g. "custom auto-configuration",
-               "JPA repository pagination", "WebClient timeout").
-        version: Optional Spring Boot version to narrow results
-                 (e.g. "3.4", "3.3").
-        max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of search results from Spring-focused sites.
-    """
-    query_lower = query.lower()
-    parts = [] if "spring boot" in query_lower else ["spring boot"]
-    if version:
-        parts.append(version)
-    parts.append(query)
-    full_query = " ".join(parts)
-    return _search(_site_query(full_query, SPRING_SITES), max_results)
-
-
-@mcp.tool()
-def search_maven(
-    artifact: str,
-    group_id: str = "",
-    max_results: int = 5,
-) -> list[dict]:
-    """Search for Maven / Gradle dependencies on Maven Central and MVN Repository.
-
-    Use this tool when you need to find a Java or Kotlin library, check the
-    latest version of an artifact, or look up Gradle plugin coordinates.
-
-    Args:
-        artifact: The artifact name or search term
-                  (e.g. "spring-boot-starter-web", "jackson-databind").
-        group_id: Optional Maven group ID to narrow results
-                  (e.g. "org.springframework.boot", "com.fasterxml.jackson.core").
-        max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of search results from Maven Central and related sites.
-    """
-    parts = []
-    if group_id:
-        parts.append(group_id)
-    parts.append(artifact)
-    return _search(_site_query(" ".join(parts), MAVEN_SITES), max_results)
-
-
-@mcp.tool()
-def web_search_news(query: str, max_results: int = 5) -> list[dict]:
-    """Search for recent news articles using DuckDuckGo.
-
-    Use this tool when the user asks about current events, breaking news,
-    recent announcements, or any time-sensitive topic where publication date
-    matters (e.g. "latest React release", "what happened with X yesterday").
-    For timeless technical questions use web_search or the search_* tools instead.
-
-    Args:
-        query: The search query string.
-        max_results: Maximum number of results to return (default 5).
-
-    Returns:
-        A list of news results with title, url, body, date, and source.
-    """
-    return _search_news(query, max_results)
 
 
 class _TextExtractor(HTMLParser):
@@ -259,11 +106,10 @@ class _TextExtractor(HTMLParser):
 
 @mcp.tool()
 def fetch_page(url: str, max_chars: int = 8000) -> str:
-    """Fetch and extract the plain-text content of a web page.
+    """Load a web page and return its plain-text content.
 
-    Use this tool after web_search or search_* to read the full content
-    of a result page for deeper analysis — for example to read an article,
-    inspect a changelog, or study documentation in detail.
+    Use this after web_search or search_code: pick the best result's URL
+    and pass it here to load and show the full page to the user.
 
     Args:
         url: The URL of the page to fetch.
