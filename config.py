@@ -1,17 +1,4 @@
-DOCS_SITES = (
-    "readthedocs.io",
-    "docs.rs",
-    "developer.mozilla.org",
-    "pkg.go.dev",
-    "docs.python.org",
-    "docs.spring.io",
-    "learn.microsoft.com",
-    "docs.github.com",
-    "kubernetes.io/docs",
-    "hub.docker.com",
-)
-
-CODE_SITES = (
+CODE_SITES = tuple(dict.fromkeys((
     "github.com",
     "dev.to",
     "developer.mozilla.org",
@@ -19,31 +6,28 @@ CODE_SITES = (
     "learn.microsoft.com",
     "reddit.com/r/programming",
     "reddit.com/r/learnprogramming",
-)
-
-ERROR_SITES = tuple(dict.fromkeys(CODE_SITES + (
     "reddit.com",
     "askubuntu.com",
     "superuser.com",
     "serverfault.com",
     "discuss.python.org",
     "bugs.python.org",
-)))
-
-MAVEN_SITES = (
+    "readthedocs.io",
+    "docs.rs",
+    "pkg.go.dev",
+    "docs.spring.io",
+    "docs.github.com",
+    "kubernetes.io/docs",
+    "hub.docker.com",
     "central.sonatype.com",
     "mvnrepository.com",
     "search.maven.org",
     "plugins.gradle.org",
-)
-
-SPRING_SITES = (
     "spring.io",
-    "docs.spring.io",
     "github.com/spring-projects",
     "github.com/spring-cloud",
     "reflectoring.io",
     "thorben-janssen.com",
     "vladmihalcea.com",
     "piotrminkowski.com",
-)
+)))
