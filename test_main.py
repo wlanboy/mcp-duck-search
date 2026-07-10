@@ -6,24 +6,14 @@ import httpx
 import search
 from search import (
     _search,
-    _search_news,
     _site_query,
     fetch_page,
     search_code,
-    search_docs,
-    search_error,
-    search_maven,
-    search_spring_boot,
     web_search,
-    web_search_news,
 )
 
 web_search_fn = web_search
 search_code_fn = search_code
-search_error_fn = search_error
-search_docs_fn = search_docs
-search_maven_fn = search_maven
-search_spring_boot_fn = search_spring_boot
 
 
 FAKE_RESULTS = [
@@ -74,44 +64,32 @@ def test_search_code(mock_ddgs):
 
 
 @patch("search.DDGS")
-def test_search_error(mock_ddgs):
+def test_search_code_error_message(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
     mock_ddgs.text.return_value = FAKE_RESULTS
 
-    results = search_error_fn("ModuleNotFoundError", language="python")
+    results = search_code_fn("ModuleNotFoundError: No module named 'foo'", language="python")
 
     call_args = mock_ddgs.text.call_args
     query = call_args[0][0]
-    assert 'python' in query
-    assert '"ModuleNotFoundError"' in query
+    assert "python" in query
+    assert "ModuleNotFoundError" in query
     assert results == FAKE_RESULTS
 
 
 @patch("search.DDGS")
-def test_search_docs(mock_ddgs):
+def test_search_code_without_language(mock_ddgs):
     mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
     mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
     mock_ddgs.text.return_value = FAKE_RESULTS
 
-    results = search_docs_fn("fastapi", topic="routing")
+    results = search_code_fn("spring-boot-starter-web dependency")
 
     call_args = mock_ddgs.text.call_args
-    assert "fastapi routing" in call_args[0][0]
+    query = call_args[0][0]
+    assert "spring-boot-starter-web dependency" in query
     assert results == FAKE_RESULTS
-
-
-@patch("search.DDGS")
-def test_web_search_news(mock_ddgs):
-    fake_news = [{"title": "News", "url": "https://example.com", "body": "...", "date": "2024-01-01", "source": "Example"}]
-    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
-    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
-    mock_ddgs.news.return_value = fake_news
-
-    results = web_search_news("python release")
-
-    mock_ddgs.news.assert_called_once_with("python release", max_results=5)
-    assert results == fake_news
 
 
 @patch("search.httpx.Client")
@@ -167,22 +145,6 @@ def test_fetch_page_http_error(mock_client_cls):
     result = fetch_page("https://example.com")
 
     assert "Error fetching page" in result
-
-
-@patch("search.DDGS")
-def test_search_spring_boot(mock_ddgs):
-    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
-    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
-    mock_ddgs.text.return_value = FAKE_RESULTS
-
-    results = search_spring_boot_fn("JPA repository pagination", version="3.4")
-
-    call_args = mock_ddgs.text.call_args
-    query = call_args[0][0]
-    assert "spring boot" in query
-    assert "3.4" in query
-    assert "JPA repository pagination" in query
-    assert results == FAKE_RESULTS
 
 
 FAKE_SEARXNG_RESPONSE = {
@@ -244,51 +206,6 @@ def test_search_falls_back_to_ddgs_and_logs_warning(mock_client_cls, mock_ddgs, 
             results = _search("python async", max_results=5)
 
     assert any("SearXNG" in r.message for r in caplog.records)
-    assert results == FAKE_RESULTS
-
-
-@patch("search.httpx.Client")
-def test_search_news_uses_searxng_news_category(mock_client_cls):
-    mock_response = MagicMock()
-    mock_response.json.return_value = FAKE_SEARXNG_RESPONSE
-    mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client_cls)
-    mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
-    mock_client_cls.get.return_value = mock_response
-
-    with patch.object(search, "_SEARXNG_URL", "http://searxng:8080"):
-        _search_news("python release", max_results=5)
-
-    call_kwargs = mock_client_cls.get.call_args
-    assert call_kwargs[1]["params"]["categories"] == "news"
-
-
-@patch("search.DDGS")
-def test_search_maven(mock_ddgs):
-    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
-    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
-    mock_ddgs.text.return_value = FAKE_RESULTS
-
-    results = search_maven_fn("jackson-databind", group_id="com.fasterxml.jackson.core")
-
-    call_args = mock_ddgs.text.call_args
-    query = call_args[0][0]
-    assert "com.fasterxml.jackson.core" in query
-    assert "jackson-databind" in query
-    assert "mvnrepository.com" in query or "central.sonatype.com" in query
-    assert results == FAKE_RESULTS
-
-
-@patch("search.DDGS")
-def test_search_maven_without_group_id(mock_ddgs):
-    mock_ddgs.return_value.__enter__ = MagicMock(return_value=mock_ddgs)
-    mock_ddgs.return_value.__exit__ = MagicMock(return_value=False)
-    mock_ddgs.text.return_value = FAKE_RESULTS
-
-    results = search_maven_fn("spring-boot-starter-web")
-
-    call_args = mock_ddgs.text.call_args
-    query = call_args[0][0]
-    assert "spring-boot-starter-web" in query
     assert results == FAKE_RESULTS
 
 

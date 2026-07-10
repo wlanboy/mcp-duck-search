@@ -11,22 +11,15 @@ Als Such-Backend wird automatisch **SearXNG** verwendet, wenn die Umgebungsvaria
 │                         MCP Duck Search Server                            │
 ├───────────────────────────────────────────────────────────────────────────┤
 │                                                                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │ web_search   │  │ search_code  │  │ search_error │  │ search_spring │  │
-│  │              │  │              │  │              │  │ _boot         │  │
-│  │ Allgemeine   │  │ Code &       │  │ Fehler &     │  │ Spring Boot   │  │
-│  │ Websuche     │  │ Beispiele    │  │ Exceptions   │  │ Ecosystem     │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘  │
-│         │                 │                 │                  │          │
-│         │    ┌────────────┴──┐  ┌───────────┴──┐               │          │
-│         │    │ search_docs   │  │ web_search_  │               │          │
-│         │    │               │  │ news         │               │          │
-│         │    │ Offizielle    │  │              │               │          │
-│         │    │ Dokumentation │  │ Nachrichten  │               │          │
-│         │    └───────┬───────┘  └──────┬───────┘               │          │
-│         │            │                 │                       │          │
-│         └────────────┴────────┬────────┴───────────────────────┘          │
-│                               ▼                                           │
+│         ┌──────────────┐         ┌──────────────┐                         │
+│         │ web_search   │         │ search_code  │                         │
+│         │              │         │              │                         │
+│         │ Allgemeine   │         │ Code, Fehler,│                         │
+│         │ Websuche     │         │ Docs & Deps  │                         │
+│         └──────┬───────┘         └──────┬───────┘                         │
+│                │                        │                                 │
+│                └───────────┬────────────┘                                 │
+│                             ▼                                             │
 │          ┌──────────────────────────────────────────────┐                 │
 │          │  Such-Backend (via SEARXNG_URL konfiguriert) │                 │
 │          │                                              │                 │
@@ -34,17 +27,18 @@ Als Such-Backend wird automatisch **SearXNG** verwendet, wenn die Umgebungsvaria
 │          │  SEARXNG_URL leer     →  DuckDuckGo          │                 │
 │          └──────────────────────────────────────────────┘                 │
 │                                                                           │
+│         ┌──────────────┐                                                  │
+│         │ fetch_page   │  Volltext einer Ergebnis-URL laden               │
+│         └──────────────┘                                                  │
+│                                                                           │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Tool | Beschreibung | Site-Filter |
 |---|---|---|
 | `web_search` | Allgemeine Websuche | Keine |
-| `search_code` | Code-Beispiele & Programmierlösungen | GitHub, MDN, Dev.to, offizielle Docs |
-| `search_error` | Fehler, Exceptions & Stack Traces | GitHub Issues/Discussions, Reddit, Bugtracker |
-| `search_spring_boot` | Spring Boot Guides, Configs & Best Practices | spring.io, Baeldung, Reflectoring, GitHub Spring Projects |
-| `search_docs` | Offizielle Dokumentation nachschlagen | Keine (findet alle Docs) |
-| `web_search_news` | Aktuelle Nachrichten | Keine |
+| `search_code` | Code, Fehler/Exceptions, offizielle Docs, Spring Boot & Maven/Gradle-Dependencies | GitHub, MDN, offizielle Docs, spring.io, Maven Central, u.a. |
+| `fetch_page` | Volltext einer URL laden (z.B. Ergebnis aus einer Suche) | Keine |
 
 ## Workflow
 
@@ -60,7 +54,7 @@ Als Such-Backend wird automatisch **SearXNG** verwendet, wenn die Umgebungsvaria
 ```
 
 1. Das LLM erkennt, dass es eine Internetsuche braucht
-2. Es ruft das passende Tool via MCP auf (z.B. `search_error` bei einem Fehler)
+2. Es ruft das passende Tool via MCP auf (z.B. `search_code` bei einem Fehler oder einer Code-Frage)
 3. Der MCP-Server leitet die Suche an SearXNG (wenn `SEARXNG_URL` gesetzt) oder DuckDuckGo weiter
 4. Das LLM verarbeitet die Ergebnisse und antwortet dem Nutzer
 
