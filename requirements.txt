@@ -23,7 +23,9 @@ authlib==1.7.2
 beartype==0.22.9
     # via py-key-value-aio
 beautifulsoup4==4.15.0
-    # via markdownify
+    # via
+    #   mcp-duck-search (pyproject.toml)
+    #   markdownify
 brotli==1.2.0
     # via httpx
 cachetools==7.1.4
