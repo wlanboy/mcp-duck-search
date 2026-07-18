@@ -1,11 +1,12 @@
 import logging
 import os
 import re
-from html.parser import HTMLParser
 
 import httpx
+from bs4 import BeautifulSoup
 from fastmcp import FastMCP
 from ddgs import DDGS
+from markdownify import markdownify as _to_markdown
 
 from config import CODE_SITES
 
@@ -76,37 +77,12 @@ def search_code(
     return _search(_site_query(full_query, CODE_SITES), max_results)
 
 
-class _TextExtractor(HTMLParser):
-    """Strip HTML tags and collect visible text, skipping non-content elements."""
-
-    _SKIP_TAGS = {"script", "style", "head", "nav", "footer", "header", "noscript"}
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._skip_depth = 0
-        self.parts: list[str] = []
-
-    def handle_starttag(self, tag: str, attrs: object) -> None:
-        if tag in self._SKIP_TAGS:
-            self._skip_depth += 1
-
-    def handle_startendtag(self, tag: str, attrs: object) -> None:
-        pass  # self-closing tags have no content; do not touch _skip_depth
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in self._SKIP_TAGS:
-            self._skip_depth = max(0, self._skip_depth - 1)
-
-    def handle_data(self, data: str) -> None:
-        if not self._skip_depth:
-            stripped = data.strip()
-            if stripped:
-                self.parts.append(stripped)
+_STRIP_TAGS = ["script", "style", "head", "nav", "footer", "header", "noscript"]
 
 
 @mcp.tool()
 def fetch_page(url: str, max_chars: int = 8000) -> str:
-    """Load a web page and return its plain-text content.
+    """Load a web page and return its content as Markdown.
 
     Use this after web_search or search_code: pick the best result's URL
     and pass it here to load and show the full page to the user.
@@ -116,7 +92,7 @@ def fetch_page(url: str, max_chars: int = 8000) -> str:
         max_chars: Maximum number of characters to return (default 8000).
 
     Returns:
-        The extracted plain text of the page, or an error message.
+        The page content converted to Markdown, or an error message.
     """
     headers = {"User-Agent": "Mozilla/5.0 (compatible; mcp-duck-search/1.0)"}
     try:
@@ -130,14 +106,17 @@ def fetch_page(url: str, max_chars: int = 8000) -> str:
     if "application/json" in content_type:
         import json as _json
         try:
-            return _json.dumps(response.json(), indent=2, ensure_ascii=False)[:max_chars]
+            return f"```json\n{_json.dumps(response.json(), indent=2, ensure_ascii=False)}\n```"[:max_chars]
         except Exception:
             return response.text[:max_chars]
     if content_type and not any(t in content_type for t in ("text/html", "text/plain")):
         return f"Unsupported content type: {content_type}"
+    if "text/plain" in content_type:
+        return response.text[:max_chars]
 
-    parser = _TextExtractor()
-    parser.feed(response.text)
-    text = "\n".join(parser.parts)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text[:max_chars]
+    soup = BeautifulSoup(response.text, "html.parser")
+    for tag in soup(_STRIP_TAGS):
+        tag.decompose()
+    markdown = _to_markdown(str(soup), heading_style="ATX")
+    markdown = re.sub(r"\n{3,}", "\n\n", markdown).strip()
+    return markdown[:max_chars]
