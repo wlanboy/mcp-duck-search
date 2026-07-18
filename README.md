@@ -149,6 +149,8 @@ docker build -t mcp-duck-search .
 
 # Run with duckduckgo backend
 docker run --rm --name mcp-duck -p 9900:9900 mcp-duck-search
+# Run in backend
+docker run --name mcp-duck -p 9900:9900 -d mcp-duck-search
 
 # Run with your own searxng backend
 docker run --rm --name mcp-duck -p 9900:9900 -e SEARXNG_URL=http://gmk:8880 mcp-duck-search
