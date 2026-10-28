@@ -4,8 +4,8 @@ import re
 
 import httpx
 from bs4 import BeautifulSoup
-from fastmcp import FastMCP
 from ddgs import DDGS
+from fastmcp import FastMCP
 from markdownify import markdownify as _to_markdown
 
 from config import CODE_SITES
@@ -36,7 +36,7 @@ def _search(query: str, max_results: int, categories: str = "general") -> list[d
                 {"title": r.get("title", ""), "href": r.get("url", ""), "body": r.get("content", "")}
                 for r in results
             ]
-        except Exception as exc:
+        except (httpx.HTTPError, ValueError) as exc:
             logger.warning("SearXNG nicht erreichbar (%s: %s) → Fallback auf DuckDuckGo", type(exc).__name__, exc)
     with DDGS() as ddgs:
         return list(ddgs.text(query, max_results=max_results))
@@ -107,7 +107,7 @@ def fetch_page(url: str, max_chars: int = 8000) -> str:
         import json as _json
         try:
             return f"```json\n{_json.dumps(response.json(), indent=2, ensure_ascii=False)}\n```"[:max_chars]
-        except Exception:
+        except ValueError:
             return response.text[:max_chars]
     if content_type and not any(t in content_type for t in ("text/html", "text/plain")):
         return f"Unsupported content type: {content_type}"

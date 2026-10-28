@@ -19,7 +19,7 @@ pyproject.toml
 .github
 
 # Tests
-test_*.py
+tests
 
 # Docker
 .dockerignore
